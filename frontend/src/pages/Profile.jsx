@@ -8,6 +8,7 @@ import axios from 'axios'
 const Profile = () => {
   // const fileRef = useRef(null);
   const { currentUser, loading, error } = useSelector((state) => state.user);
+  console.log(currentUser)
   // const [file,setFile] = useState(undefined)
   const [formData,setFormData] = useState({})
   const [updateSuccess,setUpdateSuccess] = useState(false)
@@ -94,7 +95,7 @@ const Profile = () => {
       <input
         type='text'
         placeholder='username'
-        defaultValue={currentUser.user.username}
+        defaultValue={currentUser?.newUser?.username || currentUser?.user?.username}
         id='username'
         className='border p-3 rounded-lg'
         onChange={handleChange}
@@ -103,7 +104,7 @@ const Profile = () => {
         type='email'
         placeholder='email'
         id='email'
-        defaultValue={currentUser.user.email}
+        defaultValue={currentUser?.newUser?.email || currentUser?.user?.email}
         className='border p-3 rounded-lg'
         onChange={handleChange}
       />
@@ -141,7 +142,7 @@ const Profile = () => {
       </span>
     </div>
 
-     <p className='text-red-700 mt-5'>{error ? error : ''}</p>?
+     <p className='text-red-700 mt-5'>{error ? error : ''}</p>
     <p className='text-green-700 mt-5'>
       {updateSuccess ? 'User is updated successfully!' : ''}
     </p>

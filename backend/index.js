@@ -7,6 +7,7 @@ import authRoute from './routes/auth.routes.js'
 import userRoute from './routes/user.routes.js'
 import listingRoute from './routes/listing.routes.js'
 import {v2 as cloudinary} from 'cloudinary'
+import fileUpload from "express-fileupload";
 const app = express()
 dotenv.config()
 connectDB()
@@ -27,6 +28,10 @@ app.use((err,req,res,next)=>{
     message
   })
 })
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: "/tmp/",
+}));
 const port = process.env.PORT
 
 app.use('/api/auth',authRoute)

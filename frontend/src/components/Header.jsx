@@ -44,7 +44,7 @@ const Header = () => {
             {currentUser ? (
               <img
                 className='rounded-full h-7 w-7 object-cover'
-                src={currentUser?.user?.avatar || currentUser?.avatar
+                src={currentUser?.newUser?.avatar || currentUser?.avatar
                    || "https://i.pinimg.com/736x/f2/00/81/f2008172601ae0e0710a02cf2ed2ea5b.jpg"
                    }
                 alt='profile'

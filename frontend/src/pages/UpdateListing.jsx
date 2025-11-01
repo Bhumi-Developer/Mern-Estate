@@ -1,4 +1,4 @@
-import { useState,useRef } from 'react';
+import { useState,useRef, useEffect } from 'react';
 // import {
 //   getDownloadURL,
 //   getStorage,
@@ -7,15 +7,16 @@ import { useState,useRef } from 'react';
 // } from 'firebase/storage';
 // import { app } from '../firebase';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useParams } from 'react-router-dom';
 import axios from 'axios';
 
-export default function CreateListing() {
+export default function UpdateListing() {
+    const params = useParams() 
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const [files, setFiles] = useState([]);
   const [photo, setPhoto] = useState("");
-  const [photoPreview, setPhotoPreview] = useState("");
+  const [photoPreview, setPhotoPreview] = useState('');
   const [formData, setFormData] = useState({
     image: "",
     name: '',
@@ -36,6 +37,19 @@ export default function CreateListing() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const fetchListing = async () => {
+      const listingId = params.listingId;
+      const response = await axios.get(`/api/listing/get/${listingId}`);
+      setFormData(response.data);
+      if (response.data.image?.url) {
+        setPhotoPreview(response.data.image.url); // existing image URL
+      }
+    };
+    fetchListing();
+  }, []);
+  
   
   // const handleImageSubmit = (e) => {
   //   if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
@@ -90,22 +104,23 @@ export default function CreateListing() {
   //   });
   // };
   
-  const changePhotoHandler =(e) =>{
-   
-    const file = e.target.files[0]
-    const reader = new FileReader(file)
-    reader.readAsDataURL(file)
-    reader.onload = () =>{
-      setPhotoPreview(reader.result)
-      setPhoto(file)
-    }
+  const changePhotoHandler = (e) =>{
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setPhotoPreview(reader.result);
+      setPhoto(file);
+    };
   }
+  
 
   const handleRemoveImage = () => {
     setPhoto("");
     setPhotoPreview("");
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
@@ -173,44 +188,48 @@ export default function CreateListing() {
    
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!photo) {
-      setImageUploadError("Please select an image first.");
-      setLoading(false);
-      return;
-    }
   
     try {
-      setLoading(true)
+      setLoading(true);
       const formDataToSend = new FormData();
+  
       Object.entries(formData).forEach(([key, value]) => {
         formDataToSend.append(key, value);
       });
+  
+      // 🟢 Only append new image if user selected one
       if (photo) {
         formDataToSend.append("image", photo);
-      } else {
-        setImageUploadError("Please select an Image first.")
-        return;
+      } else if (formData.image?.url) {
+        // Send existing image URL (so backend can reuse it)
+        formDataToSend.append("existingImage", formData.image.url);
       }
+  
       formDataToSend.append("userRef", currentUser.user._id);
   
-      const response = await axios.post("/api/listing/create", formDataToSend, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
-      });
+      const response = await axios.put(
+        `/api/listing/update/${params.listingId}`,
+        formDataToSend,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
   
-      setLoading(false)
+      setLoading(false);
       navigate(`/listing/${response.data._id}`);
     } catch (error) {
-      setError(error.message)
-      setLoading(false)
+      setError(error.response?.data?.message || error.message);
+      setLoading(false);
     }
   };
+  
 
  
   return (
     <main className='p-3 max-w-4xl mx-auto'>
       <h1 className='text-3xl font-semibold text-center my-7'>
-        Create a Listing
+         Update Listing
       </h1>
       <form 
       onSubmit={handleSubmit} 
@@ -414,7 +433,7 @@ export default function CreateListing() {
             disabled={loading || uploading}
             className='p-3 bg-slate-700 text-white rounded-lg uppercase hover:opacity-95 disabled:opacity-80'
           >
-            {loading ? 'Creating...' : 'Create listing'}
+            {loading ? 'Updating...' : 'Update listing'}
           </button>
           {error && <p className='text-red-700 text-sm'>{error}</p>}
         </div>

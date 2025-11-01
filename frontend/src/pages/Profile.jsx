@@ -8,10 +8,12 @@ import axios from 'axios'
 const Profile = () => {
   // const fileRef = useRef(null);
   const { currentUser, loading, error } = useSelector((state) => state.user);
-  console.log(currentUser)
+  // console.log(currentUser)
   // const [file,setFile] = useState(undefined)
   const [formData,setFormData] = useState({})
   const [updateSuccess,setUpdateSuccess] = useState(false)
+  const [showListingsError,setShowListingsError] = useState(false)
+  const [userListings,setUserListings] = useState([])
   const dispatch = useDispatch()
   
   // useEffect(()=>{
@@ -45,6 +47,21 @@ const Profile = () => {
       dispatch(updateUserFailure(error.response?.data?.message))
     }
   }
+
+  const handleShowListings = async()=>{
+    try {
+      const response = await axios.get(
+        `/api/user/listings/${currentUser.user._id}`,
+        {
+         withCredentials:true,
+        }
+      )
+            // console.log(response)
+            setUserListings(response.data)
+    } catch (error) {
+      setShowListingsError(true)
+    }
+  }
   
   const handleDeleteUser = async(e) =>{
     try {
@@ -63,6 +80,15 @@ const Profile = () => {
       dispatch(signOutUserSuccess(response.data))
     } catch (error) {
       dispatch(signOutUserFailure(error.response?.data?.message))
+    }
+  }
+
+  const handleListingDelete =async(listingId)=>{
+    try {
+      const response = await axios.delete(`/api/listing/delete/${listingId}`)
+      setUserListings((prev)=>prev.filter((listing)=>listing._id !== listingId))
+    } catch (error) {
+      console.log(error)
     }
   }
 
@@ -146,14 +172,14 @@ const Profile = () => {
     <p className='text-green-700 mt-5'>
       {updateSuccess ? 'User is updated successfully!' : ''}
     </p>
-    {/*<button onClick={handleShowListings} className='text-green-700 w-full'>
+    <button onClick={handleShowListings} className='text-green-700 w-full'>
       Show Listings
     </button>
     <p className='text-red-700 mt-5'>
       {showListingsError ? 'Error showing listings' : ''}
-    </p> */}
+    </p>
 
-    {/* {userListings && userListings.length > 0 && (
+    {userListings && userListings.length > 0 && (
       <div className='flex flex-col gap-4'>
         <h1 className='text-center mt-7 text-2xl font-semibold'>
           Your Listings
@@ -165,7 +191,7 @@ const Profile = () => {
           >
             <Link to={`/listing/${listing._id}`}>
               <img
-                src={listing.imageUrls[0]}
+                src={listing.image.url}
                 alt='listing cover'
                 className='h-16 w-16 object-contain'
               />
@@ -191,7 +217,7 @@ const Profile = () => {
           </div>
         ))}
       </div>
-    )} */}
+    )}
   </div>
 );
 }

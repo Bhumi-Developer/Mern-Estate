@@ -2,6 +2,7 @@ import mongoose from "mongoose"
 import bcrypt from 'bcrypt'
 import User from '../models/user.model.js'
 import { generateToken } from "../config/token.js"
+import Listing from "../models/listing.model.js"
 
 export const updateUser = async(req,res) =>{
     const {id} = req.params
@@ -47,4 +48,19 @@ export const deleteUser = async(req,res) =>{
         return res.status(500).json({message:"Server Error"})
     }
 }
-
+export const getListings = async (req, res) => {
+    try {
+      // Only allow the user to access their own listings
+      if (req.user.id !== req.params.id) {
+        return res.status(403).json({ message: "Not authorized" })
+      }
+  
+      const listings = await Listing.find({ userRef: req.params.id })
+  
+      return res.status(200).json(listings)
+    } catch (error) {
+      console.error("Error fetching listings:", error)
+      return res.status(500).json({ message: "Server error" })
+    }
+  }
+  
